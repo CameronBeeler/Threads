@@ -13,6 +13,25 @@ public class Main
     {
         System.out.println("Hello from the main thread ->" + currentThread().toString());
 
+        CountDown count1 = new CountDown();
+        CountDown count2 = new CountDown();
+        CountDownThread t1 = new CountDownThread(count1);
+        t1.setName("Thread 1");
+
+        CountDownThread t2 = new CountDownThread(count1);
+        t2.setName("Thread 2");
+
+        t1.start();
+
+        t2.start();
+    }
+
+
+
+
+    public static
+    void runningMultipleThreads()
+    {
         Thread anotherThread = new AnotherThread();
         anotherThread.setName("Blue");
         anotherThread.start();
@@ -66,7 +85,6 @@ public class Main
         {
             System.out.println("stinking exception");
         }
-
     }
 
     public static
@@ -138,5 +156,55 @@ public class Main
                 System.out.println(ANSI_GREEN + "iteration# " + i + ", Thread# ->" + currentThread().toString());
             }
         }
+    }
+}
+
+class CountDown
+{
+    private int i;
+
+    public void doCountDown()
+    {
+        String color;
+
+        System.out.println("ThreadName " + currentThread().getName());
+        switch (currentThread().getName())
+        {
+            case "Thread 1":
+                color = ThreadColor.ANSI_BLUE;
+                System.out.println("Thread 1 " + color + "color assigned" + ThreadColor.ANSI_RESET);
+                break;
+            case "Thread 2":
+                color = ThreadColor.ANSI_GRAY + ThreadColor.ANSI_UNDERLINE + ThreadColor.ANSI_BOLD ;
+                System.out.println("Thread 2 " + color + "color assigned" + ThreadColor.ANSI_RESET);
+                break;
+            default:
+                color = ThreadColor.ANSI_RED;
+        }
+        synchronized (this)
+        {
+            for (i = 10; i > 0; i--)
+            {
+                System.out.println(color + Thread.currentThread().getName() + ":i =" + i + ThreadColor.ANSI_RESET);
+            }
+        }
+
+    }
+}
+
+class CountDownThread extends Thread
+{
+    private CountDown threadCountDown;
+
+
+    public CountDownThread(CountDown countdown)
+    {
+        threadCountDown = countdown;
+    }
+
+    public
+    void run()
+    {
+        threadCountDown.doCountDown();
     }
 }
