@@ -1,5 +1,7 @@
 package com.cambeeler;
 
+import java.util.Random;
+
 import static com.cambeeler.ThreadColor.*;
 import static java.lang.Thread.currentThread;
 import static java.lang.Thread.interrupted;
@@ -12,6 +14,19 @@ public class Main
     void main(String[] args)
     {
         System.out.println("Hello from the main thread ->" + currentThread().toString());
+        Message message = new Message();
+        (new Thread(new Writer(message))).start();
+        (new Thread(new Reader(message))).start();
+
+
+    }
+
+
+
+
+    public static
+    void runningMultipleThreads()
+    {
 
         CountDown count1 = new CountDown();
         CountDown count2 = new CountDown();
@@ -24,14 +39,9 @@ public class Main
         t1.start();
 
         t2.start();
-    }
 
+//      Multiple functions kicking off threads...
 
-
-
-    public static
-    void runningMultipleThreads()
-    {
         Thread anotherThread = new AnotherThread();
         anotherThread.setName("Blue");
         anotherThread.start();
@@ -206,5 +216,126 @@ class CountDownThread extends Thread
     void run()
     {
         threadCountDown.doCountDown();
+    }
+}
+
+
+class Message
+{
+    private String message;
+    private boolean empty = true;
+
+    public synchronized
+    String read()
+    {
+        while(empty)
+        {
+            try
+            {
+                wait();
+            }
+            catch(InterruptedException i)
+            {
+                System.out.println(i.getMessage());
+            }
+        }
+        empty=true;
+        notifyAll();
+        return message;
+    }
+
+    public synchronized
+    void write(String message)
+    {
+        while(!empty)
+        {
+            try
+            {
+                wait();
+            }
+            catch(InterruptedException i)
+            {
+                System.out.println(i.getMessage());
+            }
+
+        }
+        empty = false;
+        notifyAll();
+        this.message = message;
+    }
+}
+
+class
+Writer
+implements Runnable
+{
+
+    private Message message;
+
+    public Writer(Message message)
+    {
+        this.message = message;
+    }
+
+    @Override
+    public
+    void run()
+    {
+        String messages[] = {"Humpty Dumpty sat on a wall, ",
+                             "Humpty Dumpty had a great fall, ",
+                             "all the kings horses ", "and all the kings men, ",
+                             "Could not put Humpty Dumpty back together again"};
+
+        Random random = new Random();
+        for (int i = 0; i<messages.length;i++)
+        {
+            message.write(messages[i]);
+            try
+            {
+                sleep(random.nextInt(2000));
+            }
+            catch(InterruptedException e)
+            {
+                System.out.println(e.getMessage());
+            }
+        }
+        message.write("Finished");
+    }
+}
+
+class
+Reader
+implements Runnable
+{
+    private Message message;
+
+    public Reader(Message message)
+    {
+        this.message = message;
+    }
+
+
+    @Override
+    public
+    void run()
+    {
+        Random random = new Random();
+        for (
+                String latestMessage = message.read();
+            !latestMessage.equalsIgnoreCase("Finished");
+            latestMessage = message.read()
+            )
+        {
+            System.out.println(latestMessage);
+            try
+            {
+                sleep(random.nextInt(2000));
+            }
+            catch(InterruptedException e)
+            {
+                System.out.println(e.getMessage());
+            }
+
+        }
     }
 }
