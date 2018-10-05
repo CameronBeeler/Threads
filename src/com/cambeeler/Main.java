@@ -13,10 +13,11 @@ public class Main
     public static
     void main(String[] args)
     {
-        System.out.println("Hello from the main thread ->" + currentThread().toString());
+//        System.out.println("Hello from the main thread ->" + currentThread().toString());
         Message message = new Message();
         (new Thread(new Writer(message))).start();
         (new Thread(new Reader(message))).start();
+//        System.out.println("Finished in the main thread ->" + currentThread().toString());
 
 
     }
@@ -224,6 +225,7 @@ class Message
 {
     private String message;
     private boolean empty = true;
+    public static int increment = 0;
 
     public synchronized
     String read()
@@ -231,7 +233,10 @@ class Message
         while(empty)
         {
             try
-            {
+            {   //  Seemingly in an eternal loop, however, the wait() method stops the execution of the thread at that
+                //  Point in the stack until a notify* method is called...at which point it executes and then does
+                //  what???
+                System.out.println(ANSI_BLUE + increment++ + ":  Waiting in Message:read()- synclock released");
                 wait();
             }
             catch(InterruptedException i)
@@ -239,6 +244,7 @@ class Message
                 System.out.println(i.getMessage());
             }
         }
+        System.out.println(ANSI_BLUE + increment++ + ":  Not Waiting in Message:read() - notifyall() called in read");
         empty=true;
         notifyAll();
         return message;
@@ -251,6 +257,7 @@ class Message
         {
             try
             {
+                System.out.println(ANSI_CYAN + increment++ + ":  Waiting in Message:write() - release sync-lock");
                 wait();
             }
             catch(InterruptedException i)
@@ -259,6 +266,8 @@ class Message
             }
 
         }
+        System.out.println(ANSI_CYAN + increment++ + ":  Not Waiting in Message:write() - notifyAll() in write...");
+
         empty = false;
         notifyAll();
         this.message = message;
@@ -275,6 +284,8 @@ implements Runnable
     public Writer(Message message)
     {
         this.message = message;
+        System.out.println(ANSI_RED + (message.increment++) + ":  Constructing in Writer()");
+
     }
 
     @Override
@@ -289,9 +300,12 @@ implements Runnable
         Random random = new Random();
         for (int i = 0; i<messages.length;i++)
         {
+            System.out.println(ANSI_RED + (message.increment++) + ":  writing message in Writer.run()");
             message.write(messages[i]);
+
             try
             {
+                System.out.println(ANSI_RED + (message.increment++) + ":  Sleeping in Writer.run()");
                 sleep(random.nextInt(2000));
             }
             catch(InterruptedException e)
@@ -299,6 +313,7 @@ implements Runnable
                 System.out.println(e.getMessage());
             }
         }
+        System.out.println(ANSI_RED + (message.increment++) + ":  writing FINISHED in Writer.run()");
         message.write("Finished");
     }
 }
@@ -312,6 +327,7 @@ implements Runnable
     public Reader(Message message)
     {
         this.message = message;
+        System.out.println(ANSI_GREEN + (message.increment++) + ":  Constructing in Reader()");
     }
 
 
@@ -326,9 +342,11 @@ implements Runnable
             latestMessage = message.read()
             )
         {
+            System.out.println(ANSI_GREEN + (message.increment++) + ":  Looping in Reader.run() - " + latestMessage);
             System.out.println(latestMessage);
             try
             {
+                System.out.println(ANSI_GREEN + (message.increment++) + ":  Sleeping in Reader.run()");
                 sleep(random.nextInt(2000));
             }
             catch(InterruptedException e)
